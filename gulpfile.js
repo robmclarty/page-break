@@ -7,8 +7,8 @@ const babel = require('gulp-babel');
 
 gulp.task('build', () => {
   return gulp
-    .src('./src/pageBreak.js')
-    .pipe(concat('pageBreak.js'))
+    .src('./src/page-break.js')
+    .pipe(concat('page-break.js'))
     .pipe(babel({
       presets: ['es2015'],
       plugins: ['transform-object-assign']
