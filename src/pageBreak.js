@@ -4,7 +4,18 @@ let collection = []; // The array to be paginated.
 let pageNum = 1;
 let perPage = 10;
 let sortOrder = 'asc';
-let sortBy = '';
+let sortByProp = '';
+
+function setDefaults({
+    page = 1,
+    per = 10,
+    order = 'asc',
+    by = '' } = {}) {
+  pageNum = page;
+  perPage = per;
+  sortOrder = order;
+  sortByProp = by;
+}
 
 // Initialize the module by giving it an array to work with, and some optional
 // default values. If managing an array of objects, the `prop` value is the
@@ -13,12 +24,12 @@ function paginate(arr = [], {
     page = 1,
     per = 10,
     order = 'asc',
-    prop = '' } = {}) {
+    by = '' } = {}) {
   collection = arr;
   pageNum = page;
   perPage = per;
   sortOrder = order;
-  sortBy = prop;
+  sortByProp = by;
 }
 
 // Return `locationsToSort`, sorted by `prop` in `order`.
@@ -82,7 +93,7 @@ function getCurrentPage() {
     page: pageNum,
     per: perPage,
     order: sortOrder,
-    by: sortBy
+    by: sortByProp
   });
 }
 
@@ -99,15 +110,62 @@ function getSortOrder() {
 }
 
 function getSortBy() {
-  return sortBy;
+  return sortByProp;
+}
+
+function getPageTotal() {
+  return Math.ceil(collection.length / perPage);
+}
+
+function sortBy(prop) {
+  sortByProp = prop;
+
+  return sortByProp;
+}
+
+function reverseOrder() {
+  sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+
+  return sortOrder;
+}
+
+function gotoPage(page) {
+  pageNum = page * perPage < collection.length ?
+    page * perPage :
+    getPageTotal();
+
+  return pageNum;
+}
+
+function gotoNextPage() {
+  if (pageNum < getPageTotal()) {
+    pageNum += 1;
+  }
+
+  return pageNum;
+}
+
+function gotoPrevPage() {
+  if (pageNum > 0) {
+    pageNum -= 1;
+  }
+
+  return pageNum;
 }
 
 export default Object.freeze(Object.assign({}, {
+  setDefaults,
   paginate,
   getPage,
   getCurrentPage,
   getPageNum,
   getPerPage,
   getSortOrder,
-  getSortBy
+  getSortBy,
+  getPageTotal,
+  reverseOrder,
+  sortBy,
+  gotoPage,
+  gotoNextPage,
+  gotoPrevPage
 }));
