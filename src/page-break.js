@@ -2,39 +2,37 @@
 
 let fullCollection = []; // Storage of all data, regardless of filter.
 let collection = []; // The array to be paginated.
-let filteredCollection = [];
 let pageNum = 1;
 let perPage = 10;
 let sortOrder = 'asc';
 let sortByProp = '';
-let filterVal = '';
-let filterByProp = '';
+let filterBy = '';
 
 function setDefaults({
     page = 1,
     per = 10,
     order = 'asc',
     by = '',
-    filter = '',
-    filterProp = '' } = {}) {
+    filter = '' } = {}) {
   pageNum = page;
   perPage = per;
   sortOrder = order;
   sortByProp = by;
-  filterVal = filter;
-  filterByProp = filterProp;
+  filterBy = filter;
 }
 
 // If el has a property called named the value stored in filterByProp,
 // and the type of that property is a string,
 // and the value of that property contains the value of filterBy.
 // NOTE: This function only works with string properties.
-function filteredCollection(arr = [], filter, filterProp) {
+function filteredCollection(arr = [], filter = '') {
   if (filter) {
     return arr.filter((el) => {
-      return el[filterProp] &&
-          typeof el[filterProp] === 'string' &&
-          el[filterProp].indexOf(filter) > 0;
+      return Object.keys(el).some((prop) => {
+        return el[prop] &&
+          typeof el[prop] === 'string' &&
+          el[prop].toLowerCase().indexOf(filter.toLowerCase()) >= 0;
+      });
     });
   }
 
@@ -89,16 +87,14 @@ function paginate(arr = [], {
     per = 10,
     order = 'asc',
     by = '',
-    filter = '',
-    fitlerProp = '' } = {}) {
+    filter = '' } = {}) {
   pageNum = page;
   perPage = per;
   sortOrder = order;
   sortByProp = by;
-  filterVal = filter;
-  filterByProp = filterProp;
+  filterBy = filter;
   fullCollection = arr;
-  collection = filteredCollection(fullCollection, filterVal, filterByProp);
+  collection = filteredCollection(arr, filter);
 }
 
 // Return a subset of the total locations, sorted and ordered. This might be
@@ -110,14 +106,15 @@ function getPage({
     per = 10,
     order = 'asc',
     by = '',
-    filter = '',
-    filterProp = '' } = {}) {
-  const start = page * per;
+    filter = '' } = {}) {
+  // Subtract 1 from the page number to get the starting array index (which
+  // start from 0).
+  const startIndex = (page - 1) * per;
 
-  collection = filteredCollection(fullCollection, filter, filterProp);
+  collection = filteredCollection(fullCollection, filter);
   collection = sortedCollection(collection, by, order);
 
-  return slicedCollection(collection, start, per);
+  return  slicedCollection(collection, startIndex, per);
 }
 
 // Return locations sorted by the current state.
@@ -127,8 +124,7 @@ function getCurrentPage() {
     per: perPage,
     order: sortOrder,
     by: sortByProp,
-    filter: filterVal,
-    filterProp: filterByProp
+    filter: filterBy
   });
 }
 
@@ -152,19 +148,12 @@ function getPageTotal() {
   return Math.ceil(collection.length / perPage);
 }
 
-function filterBy(prop) {
-  filterByProp = prop;
-
-  return filterByProp;
-}
-
 // Reset pageNum to 1 when a new filter is applied, as any existing pageNum
 // will no longer be relevant.
-function applyFilter(filter, prop) {
-  filterVal = filter;
-  filterByProp = prop;
+function applyFilter(filter) {
+  filterBy = filter;
   pageNum = 1;
-  collection = filteredCollection(fullCollection, filterVal, filterByProp);
+  collection = filteredCollection(fullCollection, filterVal);
 
   return collection;
 }
@@ -172,10 +161,14 @@ function applyFilter(filter, prop) {
 // Reset pageNum to 1 when filter is removed, as any existing pageNum
 // will no longer be relevant.
 function removeFilter() {
-  filterVal = '';
+  filterBy = '';
   collection = fullCollection;
 
   return collection;
+}
+
+function getFilter() {
+  return filterBy;
 }
 
 function sortBy(prop) {
@@ -230,5 +223,6 @@ export default Object.freeze(Object.assign({}, {
   gotoNextPage,
   gotoPrevPage,
   applyFilter,
-  removeFilter
+  removeFilter,
+  getFilter
 }));
