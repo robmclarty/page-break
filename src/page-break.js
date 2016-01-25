@@ -1,38 +1,47 @@
 'use strict';
 
+let fullCollection = []; // Storage of all data, regardless of filter.
 let collection = []; // The array to be paginated.
+let filteredCollection = [];
 let pageNum = 1;
 let perPage = 10;
 let sortOrder = 'asc';
 let sortByProp = '';
+let filterVal = '';
+let filterByProp = '';
 
 function setDefaults({
     page = 1,
     per = 10,
     order = 'asc',
-    by = '' } = {}) {
+    by = '',
+    filter = '',
+    filterProp = '' } = {}) {
   pageNum = page;
   perPage = per;
   sortOrder = order;
   sortByProp = by;
+  filterVal = filter;
+  filterByProp = filterProp;
 }
 
-// Initialize the module by giving it an array to work with, and some optional
-// default values. If managing an array of objects, the `prop` value is the
-// name of the object attribute to sort by.
-function paginate(arr = [], {
-    page = 1,
-    per = 10,
-    order = 'asc',
-    by = '' } = {}) {
-  collection = arr;
-  pageNum = page;
-  perPage = per;
-  sortOrder = order;
-  sortByProp = by;
+// If el has a property called named the value stored in filterByProp,
+// and the type of that property is a string,
+// and the value of that property contains the value of filterBy.
+// NOTE: This function only works with string properties.
+function filteredCollection(arr = [], filter, filterProp) {
+  if (filter) {
+    return arr.filter((el) => {
+      return el[filterProp] &&
+          typeof el[filterProp] === 'string' &&
+          el[filterProp].indexOf(filter) > 0;
+    });
+  }
+
+  return arr;
 }
 
-// Return `locationsToSort`, sorted by `prop` in `order`.
+// Return `arr`, sorted by `prop` in `order`.
 // `order` should be either "asc" or "desc".
 function sortedCollection(arr, prop, order) {
   return arr.sort((compA, compB) => {
@@ -72,6 +81,26 @@ function slicedCollection(arr, start, per) {
     arr.slice(start, end);
 }
 
+// Initialize the module by giving it an array to work with, and some optional
+// default values. If managing an array of objects, the `by` value is the
+// name of the object attribute to sort by.
+function paginate(arr = [], {
+    page = 1,
+    per = 10,
+    order = 'asc',
+    by = '',
+    filter = '',
+    fitlerProp = '' } = {}) {
+  pageNum = page;
+  perPage = per;
+  sortOrder = order;
+  sortByProp = by;
+  filterVal = filter;
+  filterByProp = filterProp;
+  fullCollection = arr;
+  collection = filteredCollection(fullCollection, filterVal, filterByProp);
+}
+
 // Return a subset of the total locations, sorted and ordered. This might be
 // the entire array (if offset and start = 0).
 // This method should be used for more granular control. If you just need the
@@ -80,8 +109,12 @@ function getPage({
     page = 1,
     per = 10,
     order = 'asc',
-    by = '' } = {}) {
+    by = '',
+    filter = '',
+    filterProp = '' } = {}) {
   const start = page * per;
+
+  collection = filteredCollection(fullCollection, filter, filterProp);
   collection = sortedCollection(collection, by, order);
 
   return slicedCollection(collection, start, per);
@@ -93,7 +126,9 @@ function getCurrentPage() {
     page: pageNum,
     per: perPage,
     order: sortOrder,
-    by: sortByProp
+    by: sortByProp,
+    filter: filterVal,
+    filterProp: filterByProp
   });
 }
 
@@ -115,6 +150,32 @@ function getSortBy() {
 
 function getPageTotal() {
   return Math.ceil(collection.length / perPage);
+}
+
+function filterBy(prop) {
+  filterByProp = prop;
+
+  return filterByProp;
+}
+
+// Reset pageNum to 1 when a new filter is applied, as any existing pageNum
+// will no longer be relevant.
+function applyFilter(filter, prop) {
+  filterVal = filter;
+  filterByProp = prop;
+  pageNum = 1;
+  collection = filteredCollection(fullCollection, filterVal, filterByProp);
+
+  return collection;
+}
+
+// Reset pageNum to 1 when filter is removed, as any existing pageNum
+// will no longer be relevant.
+function removeFilter() {
+  filterVal = '';
+  collection = fullCollection;
+
+  return collection;
 }
 
 function sortBy(prop) {
@@ -167,5 +228,7 @@ export default Object.freeze(Object.assign({}, {
   sortBy,
   gotoPage,
   gotoNextPage,
-  gotoPrevPage
+  gotoPrevPage,
+  applyFilter,
+  removeFilter
 }));

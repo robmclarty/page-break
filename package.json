@@ -1,6 +1,6 @@
 {
   "name": "page-break",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A simple set of utilities for managing pagination of a collection of objects in javascript.",
   "main": "dist/page-break.js",
   "author": "Rob McLarty <r@robmclarty.com> (http://robmclarty.com)",
